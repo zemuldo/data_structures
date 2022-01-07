@@ -2,7 +2,15 @@ defmodule App.MerkleTree do
   alias App.Utils
   alias App.Transaction
 
-  def create(hashes), do: create_root([hashes])
+  def create(hashes) when is_binary(hashes) do
+    {:ok, contents} = File.read(hashes)
+
+    hashes = contents |> String.split("\n", trim: true)
+
+    create(hashes)
+  end
+
+  def create(hashes), do: build_tree([hashes])
 
   def verify_transaction(_, nil, _), do: nil
 
@@ -15,65 +23,41 @@ defmodule App.MerkleTree do
   end
 
   defp build_root(tree_child, {position, current_hash}) when rem(position, 2) == 0 do
-    next_position = (position / 2) |> floor()
+    next_position = div(position, 2)
 
-    case tree_child |> Enum.at(position + 1) do
-      nil ->
-        {next_position, current_hash}
+    current_hash = hash_pair([current_hash, Enum.at(tree_child, position + 1)])
 
-      pair_hash ->
-        current_hash = Utils.sha256(current_hash <> pair_hash)
-        {next_position, current_hash}
-    end
-  end
-
-  defp build_root(tree_child, {position, current_hash}) do
-    pair_hash = tree_child |> Enum.at(position - 1)
-    current_hash = Utils.sha256(pair_hash <> current_hash)
-
-    next_position = ((position - 1) / 2) |> floor()
     {next_position, current_hash}
   end
 
-  defp create_root([[]] = tree), do: tree
+  defp build_root(tree_child, {position, current_hash}) do
+    current_hash = hash_pair([Enum.at(tree_child, position - 1), current_hash])
 
-  defp create_root([[_root] | _] = tree), do: tree
-
-  defp create_root([current_nodes | _] = tree) do
-    next_level_nodes = tree |> Enum.at(0) |> Enum.count() |> get_next_level_nodes()
-
-    {_, next_level_nodes} =
-      0..next_level_nodes
-      |> Enum.to_list()
-      |> Enum.reduce({0, []}, &create_or_append_node_hash(&1, &2, current_nodes))
-
-    create_root([next_level_nodes] ++ tree)
+    next_position = div((position - 1), 2)
+    {next_position, current_hash}
   end
 
-  defp create_or_append_node_hash(_, {position, next_level_nodes}, current_nodes) do
-    current_hash = Enum.at(current_nodes, position)
-    pair_hash = Enum.at(current_nodes, position + 1)
+  defp build_tree([[]] = tree), do: tree
 
-    create_node(current_hash, pair_hash, next_level_nodes, position)
+  defp build_tree([[_root] | _] = tree), do: tree
+
+  defp build_tree([current_nodes | _] = tree) do
+    current_nodes
+    |> Enum.chunk_every(2)
+    |> Enum.map(&hash_pair/1)
+    |> (&([&1] ++ tree)).()
+    |> build_tree()
   end
 
-  defp create_node(nil, _, next_level_nodes, position) do
-    {position, next_level_nodes}
+  defp hash_pair([left]) do
+    left
   end
 
-  defp create_node(current_hash, nil, next_level_nodes, position) do
-    {position + 2, next_level_nodes ++ [current_hash]}
+  defp hash_pair([left, nil]) do
+    left
   end
 
-  defp create_node(current_hash, pair_hash, next_level_nodes, position) do
-    hash = Utils.sha256(current_hash <> pair_hash)
-    {position + 2, next_level_nodes ++ [hash]}
-  end
-
-  defp get_next_level_nodes(current_level_nodes) do
-    case rem(current_level_nodes, 2) do
-      0 -> (current_level_nodes / 2) |> floor()
-      _ -> ((current_level_nodes + 1) / 2) |> floor()
-    end
+  defp hash_pair([left, right]) do
+    Utils.sha256(left <> right)
   end
 end

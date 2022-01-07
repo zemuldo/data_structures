@@ -164,4 +164,11 @@ defmodule AppTest do
 
     refute App.verify_block(block)
   end
+
+  test "Merkle Tree Build Time" do
+
+    {time_in_microseconds, _} = :timer.tc(fn -> App.MerkleTree.create("test/hashes.txt") end)
+
+    assert time_in_microseconds / 1000 |> floor() < 1500
+  end
 end
