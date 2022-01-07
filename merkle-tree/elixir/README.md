@@ -1,21 +1,9 @@
-# App
+# Merkle Tree Elixir
 
-**TODO: Add description**
+An Elixir Implementation of Mrkle Tree
 
-## Installation
+To test the code run 
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `app` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:app, "~> 0.1.0"}
-  ]
-end
+```sh
+mix run create_root.exs "test/hashes.txt"  
 ```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/app](https://hexdocs.pm/app).
-
