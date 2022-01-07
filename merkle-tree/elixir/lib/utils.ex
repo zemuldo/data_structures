@@ -6,4 +6,16 @@ defmodule App.Utils do
     |> Base.encode16()
     |> String.downcase()
   end
+
+  def hash_pair([left]) do
+    left
+  end
+
+  def hash_pair([left, nil]) do
+    left
+  end
+
+  def hash_pair([left, right]) do
+    sha256(left <> right)
+  end
 end

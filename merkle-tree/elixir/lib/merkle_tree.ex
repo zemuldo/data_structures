@@ -1,4 +1,5 @@
 defmodule App.MerkleTree do
+  
   alias App.Utils
   alias App.Transaction
 
@@ -25,13 +26,13 @@ defmodule App.MerkleTree do
   defp build_root(tree_child, {position, current_hash}) when rem(position, 2) == 0 do
     next_position = div(position, 2)
 
-    current_hash = hash_pair([current_hash, Enum.at(tree_child, position + 1)])
+    current_hash = Utils.hash_pair([current_hash, Enum.at(tree_child, position + 1)])
 
     {next_position, current_hash}
   end
 
   defp build_root(tree_child, {position, current_hash}) do
-    current_hash = hash_pair([Enum.at(tree_child, position - 1), current_hash])
+    current_hash = Utils.hash_pair([Enum.at(tree_child, position - 1), current_hash])
 
     next_position = div((position - 1), 2)
     {next_position, current_hash}
@@ -44,20 +45,8 @@ defmodule App.MerkleTree do
   defp build_tree([current_nodes | _] = tree) do
     current_nodes
     |> Enum.chunk_every(2)
-    |> Enum.map(&hash_pair/1)
+    |> Enum.map(&Utils.hash_pair/1)
     |> (&([&1] ++ tree)).()
     |> build_tree()
-  end
-
-  defp hash_pair([left]) do
-    left
-  end
-
-  defp hash_pair([left, nil]) do
-    left
-  end
-
-  defp hash_pair([left, right]) do
-    Utils.sha256(left <> right)
   end
 end
