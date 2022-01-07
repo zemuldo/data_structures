@@ -2,16 +2,25 @@ defmodule App.MerkleTree do
   alias App.Utils
   alias App.Transaction
 
-  def create(hashes) when is_binary(hashes) do
-     File.stream!(hashes)
+  def create_root(hashes) when is_binary(hashes) do
+    File.stream!(hashes)
     |> Stream.map(&String.trim/1)
     |> Stream.chunk_every(2)
     |> Stream.map(&Utils.hash_pair(&1))
     |> Enum.to_list()
-    |> create()
+    |> create_tree()
+    |> Enum.at(0)
+    |> Enum.at(0)
   end
 
-  def create(hashes), do: build_tree([hashes])
+  def create_root(hashes) do
+    hashes
+    |> create_tree()
+    |> Enum.at(0)
+    |> Enum.at(0)
+  end
+
+  def create_tree(hashes), do: build_tree([hashes])
 
   def verify_transaction(_, nil, _), do: nil
 

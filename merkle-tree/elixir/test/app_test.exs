@@ -55,7 +55,7 @@ defmodule AppTest do
 
     assert 10 == App.Block.count_transactions(block)
 
-    tree = App.Block.get_transaction_hashes(block) |> App.MerkleTree.create()
+    tree = App.Block.get_transaction_hashes(block) |> App.MerkleTree.create_tree()
 
     assert Enum.at(tree, 0) == [
              "a8c649cf6a9412d55b5c210a041e3a68da399b557193d96ec5a93b8d11fabcd8"
@@ -82,7 +82,7 @@ defmodule AppTest do
       |> App.Block.add_transaction()
     end)
 
-    tree = App.Block.get_transaction_hashes(block) |> App.MerkleTree.create()
+    tree = App.Block.get_transaction_hashes(block) |> App.MerkleTree.create_tree()
     n = 9
 
     root = Block.verify_transaction(n * 4, block, tree)
@@ -151,7 +151,8 @@ defmodule AppTest do
     block = App.create_block(transactions)
 
     n = 99
-     Transaction.init(
+
+    Transaction.init(
       %{
         id: n * 4,
         amount: n * 200,
@@ -166,9 +167,8 @@ defmodule AppTest do
   end
 
   test "Merkle Tree Build Time" do
+    root = App.MerkleTree.create_root("test/hashes.txt")
 
-    tree = App.MerkleTree.create("test/hashes.txt")
-
-    assert tree |> Enum.at(0) |> Enum.at(0) == "c1ffa0ab32c7a472ec6400f6ecce10a0a10dab1840e9518ea0b9b5597675508c"
+    assert root == "c1ffa0ab32c7a472ec6400f6ecce10a0a10dab1840e9518ea0b9b5597675508c"
   end
 end
