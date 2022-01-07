@@ -167,8 +167,8 @@ defmodule AppTest do
 
   test "Merkle Tree Build Time" do
 
-    {time_in_microseconds, _} = :timer.tc(fn -> App.MerkleTree.create("test/hashes.txt") end)
+    tree = App.MerkleTree.create("test/hashes.txt")
 
-    assert time_in_microseconds / 1000 |> floor() < 1500
+    assert tree |> Enum.at(0) |> Enum.at(0) == "c1ffa0ab32c7a472ec6400f6ecce10a0a10dab1840e9518ea0b9b5597675508c"
   end
 end

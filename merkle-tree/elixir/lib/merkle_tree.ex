@@ -1,14 +1,14 @@
 defmodule App.MerkleTree do
-  
   alias App.Utils
   alias App.Transaction
 
   def create(hashes) when is_binary(hashes) do
-    {:ok, contents} = File.read(hashes)
-
-    hashes = contents |> String.split("\n", trim: true)
-
-    create(hashes)
+     File.stream!(hashes)
+    |> Stream.map(&String.trim/1)
+    |> Stream.chunk_every(2)
+    |> Stream.map(&Utils.hash_pair(&1))
+    |> Enum.to_list()
+    |> create()
   end
 
   def create(hashes), do: build_tree([hashes])
@@ -34,7 +34,7 @@ defmodule App.MerkleTree do
   defp build_root(tree_child, {position, current_hash}) do
     current_hash = Utils.hash_pair([Enum.at(tree_child, position - 1), current_hash])
 
-    next_position = div((position - 1), 2)
+    next_position = div(position - 1, 2)
     {next_position, current_hash}
   end
 
