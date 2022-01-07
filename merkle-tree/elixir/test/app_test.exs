@@ -128,7 +128,7 @@ defmodule AppTest do
         }
       )
 
-    block = App.create_block(transactions) |> IO.inspect()
+    block = App.create_block(transactions)
 
     assert App.verify_block(block)
   end
@@ -148,7 +148,7 @@ defmodule AppTest do
         }
       )
 
-    block = App.create_block(transactions) |> IO.inspect()
+    block = App.create_block(transactions)
 
     n = 99
      Transaction.init(

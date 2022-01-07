@@ -6,7 +6,7 @@ defmodule App.Block do
   defstruct id: nil, merkele_root: nil
 
   def add_transaction(%Transaction{} = t) do
-    tre = TransactionsStore.insert(t)
+    :ok = TransactionsStore.insert(t)
 
     {:ok, t}
   end
