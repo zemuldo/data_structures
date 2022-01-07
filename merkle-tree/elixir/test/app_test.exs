@@ -14,7 +14,7 @@ defmodule AppTest do
   end
 
   test "Add Transaction", %{block: block, t: t} do
-    assert :ok == App.Block.add_transaction(t, block)
+    assert :ok == App.Block.add_transaction(t)
 
     assert 1 == App.Block.count_transactions(block)
 
@@ -25,7 +25,7 @@ defmodule AppTest do
   end
 
   test "Get Block Transaction Hashes", %{block: block, t: t} do
-    :ok = App.Block.add_transaction(t, block)
+    :ok = App.Block.add_transaction(t)
 
     [hash] = App.Block.get_transaction_hashes(block)
 
@@ -41,8 +41,7 @@ defmodule AppTest do
     |> Enum.to_list()
     |> Enum.map(fn n ->
       App.Block.add_transaction(
-        Transaction.init(n * 4, n * 200, n * 1000, Timex.shift(datetime, hours: n), block),
-        block
+        Transaction.init(n * 4, n * 200, n * 1000, Timex.shift(datetime, hours: n), block)
       )
     end)
 
@@ -64,12 +63,11 @@ defmodule AppTest do
     |> Enum.to_list()
     |> Enum.map(fn n ->
       App.Block.add_transaction(
-        Transaction.init(n * 4, n * 200, n * 1000, Timex.shift(datetime, hours: n), block),
-        block
+        Transaction.init(n * 4, n * 200, n * 1000, Timex.shift(datetime, hours: n), block)
       )
     end)
 
-    tree = App.Block.get_transaction_hashes(block) |> App.MerkleTree.create() |> IO.inspect()
+    tree = App.Block.get_transaction_hashes(block) |> App.MerkleTree.create()
     n = 9
 
     root =
@@ -91,5 +89,15 @@ defmodule AppTest do
       )
 
     assert root == tree |> Enum.at(0) |> Enum.at(0)
+
+    # Change the balance of a transaction
+    root =
+      Block.verify_transaction(
+        Transaction.init(n * 4, n * 200, n * 2000, Timex.shift(datetime, hours: n), block),
+        block,
+        tree
+      )
+
+      assert root != tree |> Enum.at(0) |> Enum.at(0)
   end
 end
