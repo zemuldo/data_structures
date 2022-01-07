@@ -8,13 +8,13 @@ defmodule AppTest do
 
     {:ok, datetime, 0} = DateTime.from_iso8601("2022-01-06T00:00:00Z")
 
-    t = Transaction.init(1, 200, 1000, datetime, block)
+    t = Transaction.init(%{id: 1, amount: 200, balance: 1000, transacted_at: datetime}, block)
 
     {:ok, %{block: block, t: t}}
   end
 
   test "Add Transaction", %{block: block, t: t} do
-    assert :ok == App.Block.add_transaction(t)
+    assert {:ok, t} == App.Block.add_transaction(t)
 
     assert 1 == App.Block.count_transactions(block)
 
@@ -25,7 +25,7 @@ defmodule AppTest do
   end
 
   test "Get Block Transaction Hashes", %{block: block, t: t} do
-    :ok = App.Block.add_transaction(t)
+    {:ok, _} = App.Block.add_transaction(t)
 
     [hash] = App.Block.get_transaction_hashes(block)
 
@@ -41,7 +41,15 @@ defmodule AppTest do
     |> Enum.to_list()
     |> Enum.map(fn n ->
       App.Block.add_transaction(
-        Transaction.init(n * 4, n * 200, n * 1000, Timex.shift(datetime, hours: n), block)
+        Transaction.init(
+          %{
+            id: n * 4,
+            amount: n * 200,
+            balance: n * 1000,
+            transacted_at: Timex.shift(datetime, hours: n)
+          },
+          block
+        )
       )
     end)
 
@@ -62,42 +70,98 @@ defmodule AppTest do
     1..100
     |> Enum.to_list()
     |> Enum.map(fn n ->
-      App.Block.add_transaction(
-        Transaction.init(n * 4, n * 200, n * 1000, Timex.shift(datetime, hours: n), block)
+      Transaction.init(
+        %{
+          id: n * 4,
+          amount: n * 200,
+          balance: n * 1000,
+          transacted_at: Timex.shift(datetime, hours: n)
+        },
+        block
       )
+      |> App.Block.add_transaction()
     end)
 
     tree = App.Block.get_transaction_hashes(block) |> App.MerkleTree.create()
     n = 9
 
-    root =
-      Block.verify_transaction(
-        Transaction.init(n * 4, n * 200, n * 1000, Timex.shift(datetime, hours: n), block),
-        block,
-        tree
-      )
+    root = Block.verify_transaction(n * 4, block, tree)
+
+    assert root == tree |> Enum.at(0) |> Enum.at(0)
+
+    n = 50
+
+    root = Block.verify_transaction(n * 4, block, tree)
 
     assert root == tree |> Enum.at(0) |> Enum.at(0)
 
     n = 99
 
-    root =
-      Block.verify_transaction(
-        Transaction.init(n * 4, n * 200, n * 1000, Timex.shift(datetime, hours: n), block),
-        block,
-        tree
+    Transaction.init(
+      %{
+        id: n * 4,
+        amount: n * 200,
+        balance: n * 2000,
+        transacted_at: Timex.shift(datetime, hours: n)
+      },
+      block
+    )
+    |> App.Block.add_transaction()
+
+    root = Block.verify_transaction(n * 4, block, tree)
+
+    assert root != tree |> Enum.at(0) |> Enum.at(0)
+  end
+
+  test "Create, Verify Block - Valid" do
+    {:ok, datetime, 0} = DateTime.from_iso8601("2022-01-06T00:00:00Z")
+
+    transactions =
+      1..100
+      |> Enum.to_list()
+      |> Enum.map(
+        &%{
+          id: &1 * 4,
+          amount: &1 * 200,
+          balance: &1 * 1000,
+          transacted_at: Timex.shift(datetime, hours: &1)
+        }
       )
 
-    assert root == tree |> Enum.at(0) |> Enum.at(0)
+    block = App.create_block(transactions) |> IO.inspect()
 
-    # Change the balance of a transaction
-    root =
-      Block.verify_transaction(
-        Transaction.init(n * 4, n * 200, n * 2000, Timex.shift(datetime, hours: n), block),
-        block,
-        tree
+    assert App.verify_block(block)
+  end
+
+  test "Create, Verify Block - Invalid" do
+    {:ok, datetime, 0} = DateTime.from_iso8601("2022-01-06T00:00:00Z")
+
+    transactions =
+      1..100
+      |> Enum.to_list()
+      |> Enum.map(
+        &%{
+          id: &1 * 4,
+          amount: &1 * 200,
+          balance: &1 * 1000,
+          transacted_at: Timex.shift(datetime, hours: &1)
+        }
       )
 
-      assert root != tree |> Enum.at(0) |> Enum.at(0)
+    block = App.create_block(transactions) |> IO.inspect()
+
+    n = 99
+     Transaction.init(
+      %{
+        id: n * 4,
+        amount: n * 200,
+        balance: n * 4000,
+        transacted_at: Timex.shift(datetime, hours: n)
+      },
+      block
+    )
+    |> App.Block.add_transaction()
+
+    refute App.verify_block(block)
   end
 end

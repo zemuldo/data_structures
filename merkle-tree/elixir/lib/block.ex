@@ -1,19 +1,22 @@
 defmodule App.Block do
   alias App.MerkleTree
   alias App.Transaction
-  alias App.TransactionsServer
+  alias App.TransactionsStore
 
-  defstruct id: nil, merkel_root: nil
+  defstruct id: nil, merkele_root: nil
 
   def add_transaction(%Transaction{} = t) do
-    TransactionsServer.insert(t)
+    tre = TransactionsStore.insert(t)
+
+    {:ok, t}
   end
 
   def add_transaction(_) do
     :error
   end
 
-  def verify_transaction(t, block, tree) do
+  def verify_transaction(id, block, tree) do
+    t = TransactionsStore.get(id)
     hash = Transaction.hash(t)
 
     index =
@@ -25,27 +28,17 @@ defmodule App.Block do
   end
 
   def count_transactions(block) do
-    TransactionsServer.count_per_block(block)
+    TransactionsStore.count_per_block(block)
   end
 
   def get_transactions(block) do
-    block
-    |> TransactionsServer.get_by_block_id()
-    |> Enum.map(fn [id, amount, balance, transacted_at, hash] ->
-      %Transaction{
-        id: id,
-        amount: amount,
-        balance: balance,
-        transacted_at: transacted_at,
-        hash: hash,
-        block_id: block.id
-      }
-    end)
+    block.id
+    |> TransactionsStore.get_by_block_id()
   end
 
   def get_transaction_hashes(block) do
-    block
-    |> TransactionsServer.get_hashes_by_block_id()
+    block.id
+    |> TransactionsStore.get_hashes_by_block_id()
     |> Enum.map(fn [hash] -> hash end)
   end
 

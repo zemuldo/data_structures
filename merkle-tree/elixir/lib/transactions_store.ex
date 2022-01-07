@@ -1,7 +1,8 @@
-defmodule App.TransactionsServer do
+defmodule App.TransactionsStore do
   use GenServer
 
   alias App.Block
+  alias App.Transaction
 
   import Ex2ms
 
@@ -45,14 +46,40 @@ defmodule App.TransactionsServer do
   end
 
   def insert(t) do
-    GenServer.call(App.TransactionsServer, {:add_transaction, t})
+    GenServer.call(App.TransactionsStore, {:add_transaction, t})
   end
 
-  def get_by_block_id(%Block{id: id}) do
+  def get(id) do
+    case :ets.match(@table_name, {id, :"$1", :"$2", :"$3", :"$4", :"$5"}) do
+      [t] ->
+        [:amount, :balance, :transacted_at, :hash, :block_id]
+        |> zip_transaction(t, %{id: id})
+
+      _ ->
+        nil
+    end
+  end
+
+  def get_by_block_id(id) do
+    keys = [:id, :amount, :balance, :transacted_at, :hash]
+
     :ets.match(@table_name, {:"$1", :"$2", :"$3", :"$4", :"$5", id})
+    |> Enum.map(&zip_transaction(keys, &1, %{block_id: id}))
   end
 
-  def get_hashes_by_block_id(%Block{id: id}) do
+  def get_hashes_by_block_id(id) do
     :ets.match(@table_name, {:_, :_, :_, :_, :"$5", id})
+  end
+
+  defp zip_transaction(keys, t, meta) do
+    keys
+    |> Enum.zip(t)
+    |> Enum.into(%{})
+    |> Map.merge(meta)
+    |> to_transaction_struct()
+  end
+
+  defp to_transaction_struct(t) do
+    struct!(%Transaction{}, t)
   end
 end

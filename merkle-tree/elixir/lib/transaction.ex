@@ -3,8 +3,13 @@ defmodule App.Transaction do
 
   defstruct [:id, :amount, :balance, :transacted_at, :hash, :block_id]
 
-  def init(id, amount, balance, transacted_at, block) do
-    %__MODULE__{id: id, amount: amount, balance: balance, transacted_at: transacted_at}
+  def init(data, block) do
+    %__MODULE__{
+      id: data.id,
+      amount: data.amount,
+      balance: data.balance,
+      transacted_at: data.transacted_at
+    }
     |> put_hash()
     |> put_block_address(block)
   end
