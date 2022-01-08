@@ -26,7 +26,8 @@ defmodule App.MixProject do
       {:ex2ms, "~> 1.0"},
       {:jason, "~> 1.2"},
       {:timex, "~> 3.0"},
-      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false}
+      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.20", only: [:docs, :dev], runtime: false},
     ]
   end
 end

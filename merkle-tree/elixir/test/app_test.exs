@@ -3,6 +3,9 @@ defmodule AppTest do
 
   alias App.{Transaction, Block}
 
+   doctest App
+   doctest App.MerkleTree
+
   setup_all %{} do
     block = %Block{id: UUID.uuid4()}
 
