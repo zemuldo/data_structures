@@ -28,7 +28,7 @@ defmodule App.Block do
   end
 
   def count_transactions(block) do
-    TransactionsStore.count_per_block(block)
+    TransactionsStore.count_per_block(block.id)
   end
 
   def get_transactions(block) do

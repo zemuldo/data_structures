@@ -1,7 +1,11 @@
 defmodule App.TransactionsStore do
+
+  @moduledoc """
+  Genserver for interacting with ets store.
+  """
+
   use GenServer
 
-  alias App.Block
   alias App.Transaction
 
   import Ex2ms
@@ -27,16 +31,10 @@ defmodule App.TransactionsStore do
     {:reply, :ok, state}
   end
 
-  def count() do
-    f =
-      fun do
-        {_, _, _, _, _, _} -> true
-      end
-
-    :ets.select_count(@table_name, f)
-  end
-
-  def count_per_block(%Block{id: id}) do
+  @doc """
+  Count transactions for a block
+  """
+  def count_per_block(id) do
     f =
       fun do
         {_, _, _, _, _, block_id} when block_id == ^id -> true
@@ -45,10 +43,16 @@ defmodule App.TransactionsStore do
     :ets.select_count(@table_name, f)
   end
 
+  @doc """
+  Add a new transaction.
+  """
   def insert(t) do
     GenServer.call(App.TransactionsStore, {:add_transaction, t})
   end
 
+  @doc """
+  Get transaction by id
+  """
   def get(id) do
     case :ets.match(@table_name, {id, :"$1", :"$2", :"$3", :"$4", :"$5"}) do
       [t] ->
@@ -60,6 +64,9 @@ defmodule App.TransactionsStore do
     end
   end
 
+  @doc """
+  Get all transactions that belong to a block
+  """
   def get_by_block_id(id) do
     keys = [:id, :amount, :balance, :transacted_at, :hash]
 
@@ -67,6 +74,9 @@ defmodule App.TransactionsStore do
     |> Enum.map(&zip_transaction(keys, &1, %{block_id: id}))
   end
 
+  @doc """
+  Get hashes of all transactions that belong to a block
+  """
   def get_hashes_by_block_id(id) do
     :ets.match(@table_name, {:_, :_, :_, :_, :"$5", id})
   end

@@ -83,6 +83,9 @@ defmodule App.MerkleTree do
     root_hash
   end
 
+  # Stream the file for the first operation and chunk for better
+  # performamnce when the file is large
+  # then pipe the result as the initial tree leafs
   defp create(hashes) when is_binary(hashes) do
      File.stream!(hashes)
     |> Stream.map(&String.trim/1)
@@ -93,6 +96,7 @@ defmodule App.MerkleTree do
     |> build_tree()
   end
 
+  # Pipe the hashes as the initial tree leafs
   defp create(hashes), do: build_tree([hashes])
 
   defp build_root(tree_child, {position, current_hash}) when rem(position, 2) == 0 do
@@ -110,10 +114,12 @@ defmodule App.MerkleTree do
     {next_position, current_hash}
   end
 
+  # Build the merkle tree by 
   defp build_tree([[]] = tree), do: tree
 
   defp build_tree([[_root] | _] = tree), do: tree
 
+  # Chunk every 2 to avoid having to run a recursive call
   defp build_tree([current_nodes | _] = tree) do
     current_nodes
     |> Enum.chunk_every(2)
