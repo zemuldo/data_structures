@@ -8,7 +8,7 @@ To test the code run.
 mix test
 ```
 
-To test the merkle tree algorithm and data structure run
+To test the merkle tree functionality run:
 
 ```sh
 mix run create_root.exs "test/hashes.txt"
