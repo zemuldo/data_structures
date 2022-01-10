@@ -44,7 +44,7 @@ defmodule App.MerkleTree do
   end
 
    @doc """
-  Generates a Merkle Tree and returns the root hash.
+  Generates a Merkle Tree and returns the tree.
 
   Takes a .txt filepath for a file that contains hash strings in each line or a list of hashes.
   Returns root hash :: `String.t()`.
